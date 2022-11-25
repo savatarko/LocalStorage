@@ -6,8 +6,7 @@ import spec.Configuration;
 import spec.MyFile;
 import spec.StorageManager;
 
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,21 +22,9 @@ import java.util.List;
 public class LocalDrive extends StorageManager
 {
 
-    public static void main(String[] args) {
-        LocalDrive ld=new LocalDrive();
-        Configuration config=new Configuration(15000,"txt");
-        config.getPathlimit().put("leale",5);
-        config.getPathlimit().put("leale/leale2",7);
-        ld.CreateStorage(config,"C:/Users/user/Desktop/asdefghh/");
-        //    System.out.println(ld.storageLocation);
-        ld.CreateDirectory("","leale");
-        ld.CreateDirectory("leale/","leale2");
-        ld.CreateDirectory("","leale3",10);
-
-
-
-
-    }
+      static{
+          sm=new LocalDrive();
+      }
 
     @Override
     public void CreateStorage(Configuration configuration, String path) {
@@ -51,7 +38,7 @@ public class LocalDrive extends StorageManager
             if(!new File(path).exists()) {
                 File f = new File(path);
                 f.mkdir();
-                java.io.File file = new java.io.File(path + "/config.txt");
+                File file = new java.io.File(path + "/config.txt");
                 FileWriter fw = new FileWriter(file);
                 fw.write(configuration.toString());
                 fw.close();
@@ -67,7 +54,26 @@ public class LocalDrive extends StorageManager
 
     @Override
     public void LoadStorage(String path) {
+       try{
+           File f=new File(path +"config.txt");
+           BufferedReader br = new BufferedReader(new FileReader(f));
+           String line;
+           int i=0;
+           long size=Long.parseLong(br.readLine());
+           String forbidden=new String(br.readLine());
+           Configuration config=new Configuration(size,forbidden);
 
+           while ((line = br.readLine()) != null) {
+               String[]max=line.split("|");
+               config.getPathlimit().put(max[0],Integer.parseInt(max[1]));
+           }
+
+           this.currentconfig=config;
+           this.storageLocation=path;
+
+       } catch(Exception e){
+           e.printStackTrace();
+       }
     }
 
     @Override
@@ -119,7 +125,6 @@ public class LocalDrive extends StorageManager
     }
 
     @Override
-    //uradi i dodaj config
     public void StoreFile(String path, MyFile file) {
         try {
             File f=new File(storageLocation + path + file.getFile().getName());
@@ -395,7 +400,6 @@ public class LocalDrive extends StorageManager
     }
 
     @Override
-    //uradi
     public List<MyFile> GetFilesTimeCreated(String path, String begintime, String endtime) {
         List<MyFile> out=new ArrayList<>();
         DateTimeFormatter format=DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z'");
@@ -421,7 +425,6 @@ public class LocalDrive extends StorageManager
     }
 
     @Override
-    //uradi
     public List<MyFile> GetFilesTimeModified(String path, String begintime, String endtime) {
         List<MyFile> out=new ArrayList<>();
         DateTimeFormatter format=DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z'");
