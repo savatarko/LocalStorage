@@ -1,5 +1,5 @@
 import com.sun.source.tree.NewArrayTree;
-import exceptions.FileNotFoundException;
+import exceptions.MyFileNotFoundException;
 import exceptions.StorageCountLimitException;
 import org.apache.commons.io.FileUtils;
 import spec.Configuration;
@@ -30,7 +30,7 @@ public class LocalDrive extends StorageManager
     public void CreateStorage(Configuration configuration, String path) {
 
 
-        this.storageLocation=path;
+        this.storageLocation=path + "/";
         this.currentconfig=configuration;
         this.maxsize= currentconfig.getMaxsize();
 
@@ -55,12 +55,16 @@ public class LocalDrive extends StorageManager
     @Override
     public void LoadStorage(String path) {
        try{
-           File f=new File(path +"config.txt");
+           File f=new File(path +"/config.txt");
+           if(!f.exists())
+           {
+               throw new MyFileNotFoundException(path);
+           }
            BufferedReader br = new BufferedReader(new FileReader(f));
            String line;
            int i=0;
-           long size=Long.parseLong(br.readLine());
-           String forbidden=new String(br.readLine());
+           long size=Long.parseLong(br.readLine().split("=")[1]);
+           String forbidden=new String(br.readLine().split("=")[1]);
            Configuration config=new Configuration(size,forbidden);
 
            while ((line = br.readLine()) != null) {
@@ -69,7 +73,7 @@ public class LocalDrive extends StorageManager
            }
 
            this.currentconfig=config;
-           this.storageLocation=path;
+           this.storageLocation=path + "/";
 
        } catch(Exception e){
            e.printStackTrace();
@@ -83,7 +87,7 @@ public class LocalDrive extends StorageManager
 
             File f=new File(storageLocation + path);
             if(!f.exists()){
-                throw new FileNotFoundException(storageLocation + path);
+                throw new MyFileNotFoundException(storageLocation + path);
             } else if(currentconfig.getPathlimit().containsKey(storageLocation + path) &&
                     currentconfig.getPathlimit().get(storageLocation + path)<new File(storageLocation + path).listFiles().length ){
                 throw new StorageCountLimitException(storageLocation + path);
@@ -105,7 +109,7 @@ public class LocalDrive extends StorageManager
 
             File f=new File(storageLocation + path);
             if(!f.exists()){
-                throw new FileNotFoundException(storageLocation + path);
+                throw new MyFileNotFoundException(storageLocation + path);
             } else if(currentconfig.getPathlimit().containsKey(storageLocation + path) &&
                     currentconfig.getPathlimit().get(storageLocation + path)<new File(storageLocation + path).listFiles().length ){
                 throw new StorageCountLimitException(storageLocation + path);
@@ -128,7 +132,10 @@ public class LocalDrive extends StorageManager
     public void StoreFile(String path, MyFile file) {
         try {
             File f=new File(storageLocation + path + file.getFile().getName());
-
+            if(!f.exists())
+            {
+                throw new FileNotFoundException();
+            }
             if(
                     (!this.currentconfig.getForbidden().contains(getExtension(file.getFile()))) &&
                             ((!currentconfig.getPathlimit().containsKey(storageLocation + path) ||
@@ -158,7 +165,7 @@ public class LocalDrive extends StorageManager
             File f=new File(storageLocation + path);
 
             if(!f.exists()){
-                throw new FileNotFoundException(storageLocation + path);
+                throw new MyFileNotFoundException(storageLocation + path);
             }
 
             f.delete();
@@ -175,6 +182,10 @@ public class LocalDrive extends StorageManager
     public void MoveFile(String oldPath, String newPath) {
         try{
             File f=new File(storageLocation + oldPath);
+            if(!f.exists())
+            {
+                throw new FileNotFoundException();
+            }
             if(!currentconfig.getPathlimit().containsKey(storageLocation + newPath) ||
                     currentconfig.getPathlimit().get(storageLocation + newPath)<new File(storageLocation + newPath).listFiles().length){
                 throw new StorageCountLimitException(storageLocation + newPath);
@@ -190,6 +201,10 @@ public class LocalDrive extends StorageManager
     public void DownloadFile(String sourcePath, String targetPath) {
         try{
             File source=new File(storageLocation + sourcePath);
+            if(!source.exists())
+            {
+                throw new FileNotFoundException();
+            }
             File target=new File(targetPath + source.getName());
             Files.copy(source.toPath(),target.toPath());
         } catch (Exception e) {
@@ -200,8 +215,17 @@ public class LocalDrive extends StorageManager
     @Override
     public void Rename(String path, String newName) {
 
-        File f=new File(storageLocation + path);
-        f.renameTo(new File(f.getParent() + "/" + newName));
+          try {
+              File f = new File(storageLocation + path);
+              if (!f.exists()) {
+                  throw new FileNotFoundException();
+              }
+              f.renameTo(new File(f.getParent() + "/" + newName));
+          }
+          catch (Exception e)
+          {
+              e.printStackTrace();
+          }
 
 
     }
@@ -211,6 +235,10 @@ public class LocalDrive extends StorageManager
         List<MyFile> out=new ArrayList<>();
         try {
             File f=new File(storageLocation + path);
+            if(!f.exists())
+            {
+                throw new FileNotFoundException();
+            }
             List<File> files= List.of(f.listFiles());
 
             for(File i: files){
@@ -233,6 +261,10 @@ public class LocalDrive extends StorageManager
         List<MyFile> out=new ArrayList<>();
         try {
             File f=new File(storageLocation + path);
+            if(!f.exists())
+            {
+                throw new FileNotFoundException();
+            }
             List<File> files= List.of(f.listFiles());
 
             for(File i: files){
@@ -263,6 +295,10 @@ public class LocalDrive extends StorageManager
         List<MyFile> out=new ArrayList<>();
         try {
             File f=new File(storageLocation + path);
+            if(!f.exists())
+            {
+                throw new FileNotFoundException();
+            }
             List<File> files= List.of(f.listFiles());
 
             for(File i: files){
@@ -350,6 +386,10 @@ public class LocalDrive extends StorageManager
 
         try {
             File f=new File(storageLocation + path);
+            if(!f.exists())
+            {
+                throw new FileNotFoundException();
+            }
             List<File> files= List.of(f.listFiles());
 
             for(File i: files){
@@ -407,7 +447,11 @@ public class LocalDrive extends StorageManager
         LocalDateTime end=LocalDateTime.parse(endtime,format);
 
         try {
-            File f=new File(storageLocation);
+            File f=new File(storageLocation + path);
+            if(!f.exists())
+            {
+                throw new FileNotFoundException();
+            }
             List<File> files= List.of(f.listFiles());
 
             for(File i: files){
@@ -432,7 +476,11 @@ public class LocalDrive extends StorageManager
         LocalDateTime end=LocalDateTime.parse(endtime,format);
 
         try {
-            File f=new File(storageLocation);
+            File f=new File(storageLocation + path);
+            if(!f.exists())
+            {
+                throw new FileNotFoundException();
+            }
             List<File> files= List.of(f.listFiles());
 
             for(File i: files){
